@@ -8,7 +8,8 @@ import com.mongodb.spark.MongoSpark
 
 object SparkCoreNLP {
 
-  val REVIEWS_LOCATION = "C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\review.json"
+  //val REVIEWS_LOCATION = "C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\review.json"
+  val REVIEWS_LOCATION = "C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\review_small.json"
 
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
@@ -31,11 +32,10 @@ object SparkCoreNLP {
     */
 
     val t0 = System.currentTimeMillis()
-    val sentences = reviews.limit(10).select($"review_id", posexplode(ssplit('text)).as(Seq("pos", "review_sentence")))
+    val sentences = reviews.select($"review_id", posexplode(ssplit('text)).as(Seq("pos", "review_sentence")))
     val results  = sentences.withColumn("sentiment", sentiment('review_sentence))
-    println(results.count())
-
-    MongoSpark.save(results)
+    
+    //MongoSpark.write(results)
     val t1 = System.currentTimeMillis()
     println("Total time: " + (t1 - t0)/ 1000 + " seconds.")
 
