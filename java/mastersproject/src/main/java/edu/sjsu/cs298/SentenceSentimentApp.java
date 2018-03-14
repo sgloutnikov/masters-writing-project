@@ -8,16 +8,15 @@ public class SentenceSentimentApp {
     public static void main(String[] args) {
 
         List<Thread> threadList = new ArrayList<Thread>();
-        int NUM_THREADS = 10;
-        int limit = 1500;
-        int skip;
+        int NUM_THREADS = 8;
+        int limit = 1250;
+        int skip = 130000;
 
+        //
 
-        // Done 60,000
-
-        // After
+        // After 130,000 - 140,000
         for (int i = 0; i < NUM_THREADS; i++) {
-            skip = 60000 + (i * limit);
+            skip = skip + (i * limit);
             System.out.println("Thread-"+ i + " range: " + skip + "-" + (skip+limit));
             SentenceSentimentWorker worker = new SentenceSentimentWorker(limit, skip);
             Thread thread = new Thread(worker, "Thread-" + i);
