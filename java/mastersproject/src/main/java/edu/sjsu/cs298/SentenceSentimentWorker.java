@@ -1,14 +1,11 @@
 package edu.sjsu.cs298;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
+import com.google.gson.*;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import edu.sjsu.cs298.pojo.Review;
 import edu.sjsu.cs298.pojo.ReviewSentenceSentiment;
+import edu.sjsu.cs298.pojo.SentimentVector;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -18,24 +15,26 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.util.CoreMap;
 import org.bson.Document;
 
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import static com.mongodb.client.model.Sorts.ascending;
+
 public class SentenceSentimentWorker implements Runnable {
 
-
-    //String fileInput = "C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\review_small_split.jsonaa";
-    String fileInput;
+    int limit;
+    int skip;
 
     MongoClient mongoClient = new MongoClient( "localhost" , 27017 );
     MongoDatabase database = mongoClient.getDatabase("yelp_reviews");
-    MongoCollection<Document> collection = database.getCollection("sentiment_results");
+    MongoCollection<Document> sentimentResults = database.getCollection("sentiment_results");
+    MongoCollection<Document> sentimentVectors = database.getCollection("sentiment_vectors");
+    MongoCollection<Document> dataCollection = database.getCollection("review_50");
 
-    public SentenceSentimentWorker(String fileInput) {
-        this.fileInput = fileInput;
+    public SentenceSentimentWorker(int limit, int skip) {
+        this.limit = limit;
+        this.skip = skip;
     }
 
     public void run() {
@@ -46,52 +45,65 @@ public class SentenceSentimentWorker implements Runnable {
 
         System.out.println(Thread.currentThread().getName() + " starting...");
         try {
-            FileInputStream fileInputStream = new FileInputStream(fileInput);
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
-            JsonReader jsonReader = new JsonReader(inputStreamReader);
-            jsonReader.setLenient(true);
-
             Gson gson = new GsonBuilder().create();
+            JsonParser jsonParser = new JsonParser();
+
+            //Get input from MongoDB
+            List<Document> inputList = dataCollection.find().sort(ascending("_id"))
+                    .limit(limit).skip(skip).into(new ArrayList<Document>());
+
             int count = 1;
+            List<Document> sentencesDocList = new ArrayList<Document>();
+            //List<Document> sentimentVectorDocList = new ArrayList<Document>();
 
-            List<Document> docList = new ArrayList<Document>();
-            while (jsonReader.hasNext()){
-                Review r = gson.fromJson(jsonReader, Review.class);
+            for (Document review : inputList) {
+                JsonElement reviewJson = jsonParser.parse(review.toJson());
+                JsonObject reviewObject = reviewJson.getAsJsonObject();
 
-                Annotation annotation = pipeline.process(r.getText());
+                String reviewId = reviewObject.get("review_id").getAsString();
+                String userId = reviewObject.get("user_id").getAsString();
+                String sentimentVector = "";
+
+                Annotation annotation = pipeline.process(reviewObject.get("text").getAsString());
                 List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
                 for (int i = 0; i < sentences.size(); i++) {
                     CoreMap sentence = sentences.get(i);
                     Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
                     int sentiment = RNNCoreAnnotations.getPredictedClass(tree);
+                    sentimentVector += sentiment;
 
-                    ReviewSentenceSentiment rss = new ReviewSentenceSentiment(r.getReview_id(), sentence.toString(),
-                            i, sentiment);
+                    ReviewSentenceSentiment rss = new ReviewSentenceSentiment(reviewId, userId,
+                            sentence.toString(), i, sentiment);
 
-                    Document doc = Document.parse(gson.toJson(rss));
-                    docList.add(doc);
-                    if (count % 500 == 0) {
-                        System.out.println(Thread.currentThread().getName() + " done: " + count);
-                        collection.insertMany(docList);
-                        docList.clear();
-                    }
+                    Document sentenceDoc = Document.parse(gson.toJson(rss));
+                    sentencesDocList.add(sentenceDoc);
+
                     count++;
                 }
 
-                if (jsonReader.peek() == JsonToken.END_DOCUMENT) {
-                    System.out.println("Finished document. Exiting.");
-                    break;
+                SentimentVector sv = new SentimentVector(reviewId, userId, sentimentVector);
+                Document sentimentVectorDoc = Document.parse(gson.toJson(sv));
+                sentimentVectors.insertOne(sentimentVectorDoc);
+                //sentimentVectorDocList.add(sentimentVectorDoc);
+
+                if (count % 500 == 0) {
+                    System.out.println(Thread.currentThread().getName() + " done: " + count);
+                    sentimentResults.insertMany(sentencesDocList);
+                    sentencesDocList.clear();
                 }
+
             }
 
             // Save the rest
-            collection.insertMany(docList);
+            //sentimentVectors.insertMany(sentimentVectorDocList);
+            sentimentResults.insertMany(sentencesDocList);
+
             System.out.println(Thread.currentThread().getName() + " DONE!");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
         finally {
-
+            mongoClient.close();
         }
     }
 }

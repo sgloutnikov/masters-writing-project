@@ -1,32 +1,35 @@
 package edu.sjsu.cs298;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SentenceSentimentApp {
 
     public static void main(String[] args) {
 
-        SentenceSentimentWorker w1 = new SentenceSentimentWorker("C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\rev_smallaa");
-        Thread t1 = new Thread(w1, "Thread-1");
-        SentenceSentimentWorker w2 = new SentenceSentimentWorker("C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\rev_smallaa");
-        Thread t2 = new Thread(w2, "Thread-2");
-        SentenceSentimentWorker w3 = new SentenceSentimentWorker("C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\rev_smallaa");
-        Thread t3 = new Thread(w3, "Thread-3");
+        //SentenceSentimentWorker w1 = new SentenceSentimentWorker(50, 0);
+        //Thread t1 = new Thread(w1, "Thread-1");
+        //t1.start();
 
-        SentenceSentimentWorker w4 = new SentenceSentimentWorker("C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\rev_smallad");
-        Thread t4 = new Thread(w4, "Thread-4");
-        SentenceSentimentWorker w5 = new SentenceSentimentWorker("C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\rev_smallae");
-        Thread t5 = new Thread(w5, "Thread-5");
-        SentenceSentimentWorker w6 = new SentenceSentimentWorker("C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\rev_smallaf");
-        Thread t6 = new Thread(w6, "Thread-6");
+        List<Thread> threadList = new ArrayList<Thread>();
 
-        SentenceSentimentWorker w7 = new SentenceSentimentWorker("C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\rev_smallag");
-        Thread t7 = new Thread(w7, "Thread-7");
+        int limit = 1000;
+        int skip;
 
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
-        t5.start();
-        t6.start();
-        t7.start();
+
+        // Done 25,000
+
+        // 26,000 - 36,000
+        for (int i = 1; i <= 10; i++) {
+            skip = 25000 + (i * limit);
+            System.out.println(i + " skip " + skip);
+            SentenceSentimentWorker worker = new SentenceSentimentWorker(limit, skip);
+            Thread thread = new Thread(worker, "Thread-" + i);
+            threadList.add(thread);
+        }
+
+        for (Thread t : threadList) {
+            t.start();
+        }
     }
 }
