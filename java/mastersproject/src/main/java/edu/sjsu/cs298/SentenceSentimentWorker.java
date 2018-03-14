@@ -26,7 +26,7 @@ public class SentenceSentimentWorker implements Runnable {
     int limit;
     int skip;
 
-    MongoClient mongoClient = new MongoClient( "localhost" , 27017 );
+    MongoClient mongoClient = new MongoClient( "24.4.4.125" , 27017 );
     MongoDatabase database = mongoClient.getDatabase("yelp_reviews");
     MongoCollection<Document> sentimentResults = database.getCollection("sentiment_results");
     MongoCollection<Document> sentimentVectors = database.getCollection("sentiment_vectors");
@@ -52,9 +52,7 @@ public class SentenceSentimentWorker implements Runnable {
             List<Document> inputList = dataCollection.find().sort(ascending("_id"))
                     .limit(limit).skip(skip).into(new ArrayList<Document>());
 
-            int count = 1;
             List<Document> sentencesDocList = new ArrayList<Document>();
-            //List<Document> sentimentVectorDocList = new ArrayList<Document>();
 
             for (Document review : inputList) {
                 JsonElement reviewJson = jsonParser.parse(review.toJson());
@@ -78,25 +76,17 @@ public class SentenceSentimentWorker implements Runnable {
                     Document sentenceDoc = Document.parse(gson.toJson(rss));
                     sentencesDocList.add(sentenceDoc);
 
-                    count++;
                 }
 
                 SentimentVector sv = new SentimentVector(reviewId, userId, sentimentVector);
                 Document sentimentVectorDoc = Document.parse(gson.toJson(sv));
-                sentimentVectors.insertOne(sentimentVectorDoc);
-                //sentimentVectorDocList.add(sentimentVectorDoc);
 
-                if (count % 500 == 0) {
-                    System.out.println(Thread.currentThread().getName() + " done: " + count);
-                    sentimentResults.insertMany(sentencesDocList);
-                    sentencesDocList.clear();
-                }
+                // Save to Mongo
+                sentimentVectors.insertOne(sentimentVectorDoc);
+                sentimentResults.insertMany(sentencesDocList);
+                sentencesDocList.clear();
 
             }
-
-            // Save the rest
-            //sentimentVectors.insertMany(sentimentVectorDocList);
-            sentimentResults.insertMany(sentencesDocList);
 
             System.out.println(Thread.currentThread().getName() + " DONE!");
         } catch (Exception ex) {
