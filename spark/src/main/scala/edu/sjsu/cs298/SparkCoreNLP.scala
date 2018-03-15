@@ -35,20 +35,6 @@ object SparkCoreNLP {
     val t1 = System.currentTimeMillis()
     println("Total time: " + (t1 - t0)/ 1000 + " seconds.")
 
-
-    /*
-    val input = Seq(
-      (1, "<xml>Stanford University is located in California. It is a great university.</xml>")
-    ).toDF("id", "text")
-
-    val output = input
-      .select(cleanxml('text).as('doc))
-      .select(explode(ssplit('doc)).as('sen))
-      .select('sen, tokenize('sen).as('words), ner('sen).as('nerTags), sentiment('sen).as('sentiment))
-
-    output.show(truncate = false)
-    */
-
   }
 
 }

@@ -45,7 +45,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>edu.sjsu.cs298.SentenceSentimentApp</mainClass>
+                            <mainClass>edu.sjsu.cs298.TupleGenerator</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
