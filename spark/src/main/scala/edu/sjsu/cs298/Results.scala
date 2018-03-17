@@ -13,6 +13,7 @@ object Results {
     val sparkSession = SparkSession.builder()
       .master("local[*]")
       .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.sentimentTuples")
+      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.userScoreTest1")
       .getOrCreate()
     import sparkSession.sqlContext.implicits._
     import org.apache.spark.sql.functions._
@@ -26,8 +27,9 @@ object Results {
     //  .count().sort(desc("count")).show(2000, truncate = false)
 
     val userTupleStats = allTuples.groupBy('user_id, 'sentimentTuple)
-     .agg(countDistinct('review_id).as("foundInNumReviews"), count('sentimentTuple).as("sentimentTupleCount"),
+      .agg(countDistinct('review_id).as("foundInNumReviews"), count('sentimentTuple).as("sentimentTupleCount"),
         length('sentimentTuple).as("tupleLength"))
+
 
     // Read users table from different collection
     val usersReadConfig = ReadConfig(Map("collection" -> "users"),
@@ -40,17 +42,33 @@ object Results {
     val userTupleExtendedStatsWithFreq = userTupleExtendedStats.withColumn("tupleFrequency",
       'foundInNumReviews.divide('totalReviews))
 
+    /*
     val tupleWeight = userTupleExtendedStatsWithFreq.groupBy('user_id, 'tupleLength)
-      .max("tupleFrequency").withColumnRenamed("max(tupleFrequency)", "maxFreq")
+      .agg(max("tupleFrequency"))
+      .withColumnRenamed("max(tupleFrequency)", "maxFreq")
       .withColumn("tupleLengthWeight", 'tupleLength.multiply('tupleLength).multiply('maxFreq))
+    */
+
+    //New with distinct
+    val tupleWeight = userTupleExtendedStatsWithFreq.groupBy('user_id, 'tupleLength)
+      .agg(max("tupleFrequency"), countDistinct('sentimentTuple))
+      .withColumnRenamed("max(tupleFrequency)", "maxFreq")
+      .withColumnRenamed("count(DISTINCT sentimentTuple)", "countDistinctTuple")
+      .withColumn("tupleLengthWeight", 'tupleLength.multiply('tupleLength).multiply('maxFreq))
+
 
     val userScore = tupleWeight.groupBy('user_id).sum("tupleLengthWeight")
       .withColumnRenamed("sum(tupleLengthWeight)", "userScore")
       .sort(desc("userScore"))
-    userScore.show(200, truncate = false)
 
+
+    /*
     val userScoreDescribed = userScore.describe("userScore")
     userScoreDescribed.show(100)
+    */
+
+    userScore.show(200, truncate = false)
+    //MongoSpark.save(userScore)
 
   }
 
