@@ -12,24 +12,18 @@ object Results {
 
     val sparkSession = SparkSession.builder()
       .master("local[*]")
-      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.sentimentTuples")
-      //.config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.userScoreTest1")
+      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.userAbnormalityScore")
+      //.config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.userAbnormalityScore")
       .getOrCreate()
     import sparkSession.sqlContext.implicits._
     import org.apache.spark.sql.functions._
 
 
     val allTuples = MongoSpark.load(sparkSession)
-    //allTuples.√∑filter(length('sentimentTuple).gt(5) && length('sentimentTuple).lt(15)).groupBy('sentimentTuple, 'user_id)
-    //  .count().sort(desc("count")).show(1000, truncate = false)
 
-    //allTuples.filter('user_id === "QuZbJquRtbY9O9JrB9NpxQ" && length('sentimentTuple).gt(200)).groupBy('sentimentTuple)
-    //  .count().sort(desc("count")).show(2000, truncate = false)
-
-    val userTupleStats = allTuples.limit(10000000).groupBy('user_id, 'sentimentTuple)
+    val userTupleStats = allTuples.groupBy('user_id, 'sentimentTuple)
       .agg(countDistinct('review_id).as("foundInNumReviews"), count('sentimentTuple).as("sentimentTupleCount"),
         length('sentimentTuple).as("tupleLength"))
-
 
     // Read users table from different collection
     val usersReadConfig = ReadConfig(Map("collection" -> "users"),
@@ -47,7 +41,7 @@ object Results {
       .withColumnRenamed("sum(sentimentTupleCount)", "totalTuplesOfLength")
       .withColumnRenamed("count(DISTINCT sentimentTuple)", "uniqueTuplesOfLength")
 
-    val userTupleStatsWithLengthStats = userTupleExtendedStatsWithFreq.join(userTupleLengthStats,
+    val userTupleFullStats = userTupleExtendedStatsWithFreq.join(userTupleLengthStats,
       Seq("user_id", "tupleLength"))
         .withColumn("observedTupleLengthFreq", 'sentimentTupleCount.divide('totalTuplesOfLength))
         .withColumn("expectedTupleLenthFreq", lit(1).divide('uniqueTuplesOfLength))
@@ -55,11 +49,18 @@ object Results {
         .withColumn("abnormalityScore", pow('tupleFrequency, 2).multiply(pow('tupleLength, 2))
           .multiply(pow('absDiffObsExpected, 2)))
 
-    val testor = userTupleStatsWithLengthStats.sort(desc("abnormalityScore"))
-    testor.show(1000, truncate = false)
+    //val sortedUserTupleFullStatsTop1M = userTupleFullStats.sort(desc("abnormalityScore")).limit(1000000)
+    //MongoSpark.save(sortedUserTupleFullStatsTop1M)
 
-    //TODO: Group by user_id sum abnormality score for user scores
+    val userAbnormalityScore = userTupleFullStats.groupBy('user_id).agg(sum('abnormalityScore)
+      .as("userAbnormalityScore")).sort(desc("userAbnormalityScore"))
 
+
+
+    // Distribution Stats
+    //val userAbnormalityScore = MongoSpark.load(sparkSession)
+    //println(userAbnormalityScore.count())
+    //userAbnormalityScore.describe("userAbnormalityScore").show()
   }
 
 }
