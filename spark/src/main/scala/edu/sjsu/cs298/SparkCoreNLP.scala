@@ -8,7 +8,6 @@ import com.mongodb.spark.MongoSpark
 
 object SparkCoreNLP {
 
-  //val REVIEWS_LOCATION = "C:\\Users\\Admin\\Downloads\\YelpDataset11\\dataset\\review.json"
   val REVIEWS_LOCATION = "/Users/sgloutnikov/Downloads/dataset/review_small.json"
 
   def main(args: Array[String]): Unit = {
