@@ -23,10 +23,12 @@ import static com.mongodb.client.model.Sorts.ascending;
 
 public class SentenceSentimentWorker implements Runnable {
 
+    String host = "";
+    int port = 27017;
     int limit;
     int skip;
 
-    MongoClient mongoClient = new MongoClient( "24.4.4.125" , 27017 );
+    MongoClient mongoClient = new MongoClient( host, port);
     MongoDatabase database = mongoClient.getDatabase("yelp_reviews");
     MongoCollection<Document> sentimentResults = database.getCollection("sentiment_results");
     MongoCollection<Document> sentimentVectors = database.getCollection("sentiment_vectors");

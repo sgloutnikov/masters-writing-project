@@ -12,9 +12,7 @@ public class SentenceSentimentApp {
         int limit = 1250;
         int skip;
 
-        //
 
-        // After 170,000 - 180,000
         for (int i = 0; i < NUM_THREADS; i++) {
             skip = 170000 + (i * limit);
             System.out.println("Thread-"+ i + " range: " + skip + "-" + (skip+limit));

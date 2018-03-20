@@ -12,12 +12,11 @@ object Results {
 
     val sparkSession = SparkSession.builder()
       .master("local[*]")
-      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.userAbnormalityScore")
-      //.config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.userAbnormalityScore")
+      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.sentimentTuples")
+      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.userAbnormalityScore")
       .getOrCreate()
     import sparkSession.sqlContext.implicits._
     import org.apache.spark.sql.functions._
-
 
     val allTuples = MongoSpark.load(sparkSession)
 
@@ -25,7 +24,6 @@ object Results {
       .agg(countDistinct('review_id).as("foundInNumReviews"), count('sentimentTuple).as("sentimentTupleCount"),
         length('sentimentTuple).as("tupleLength"))
 
-    // Read users table from different collection
     val usersReadConfig = ReadConfig(Map("collection" -> "users"),
       Some(ReadConfig(sparkSession)))
 
@@ -49,18 +47,17 @@ object Results {
         .withColumn("abnormalityScore", pow('tupleFrequency, 2).multiply(pow('tupleLength, 2))
           .multiply(pow('absDiffObsExpected, 2)))
 
-    //val sortedUserTupleFullStatsTop1M = userTupleFullStats.sort(desc("abnormalityScore")).limit(1000000)
-    //MongoSpark.save(sortedUserTupleFullStatsTop1M)
-
     val userAbnormalityScore = userTupleFullStats.groupBy('user_id).agg(sum('abnormalityScore)
       .as("userAbnormalityScore")).sort(desc("userAbnormalityScore"))
-
 
 
     // Distribution Stats
     //val userAbnormalityScore = MongoSpark.load(sparkSession)
     //println(userAbnormalityScore.count())
     //userAbnormalityScore.describe("userAbnormalityScore").show()
+
+    //val tupleStats = MongoSpark.load(sparkSession)
+    //tupleStats.describe("abnormalityScore").show()
   }
 
 }

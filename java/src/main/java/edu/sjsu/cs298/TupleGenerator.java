@@ -6,7 +6,6 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,16 +14,18 @@ import static com.mongodb.client.model.Sorts.ascending;
 public class TupleGenerator {
 
     public static void main(String[] args) {
+        String host = "";
+        int port = 27017;
+        int skip = 0;
         TupleGenerator tg = new TupleGenerator();
 
-        MongoClient mongoClient = new MongoClient( "24.4.4.125" , 27017 );
+        MongoClient mongoClient = new MongoClient(host, port);
         MongoDatabase database = mongoClient.getDatabase("yelp_reviews");
         MongoCollection<Document> sentimentVectors = database.getCollection("sentimentVectors");
         MongoCollection<Document> sentimentTuples = database.getCollection("sentimentTuples");
 
-        // 0 - 700k
         MongoCursor<Document> cursor = sentimentVectors.find().sort(ascending("_id"))
-                .skip(700000).iterator();
+                .skip(skip).iterator();
 
         try {
             while (cursor.hasNext()) {
