@@ -12,15 +12,14 @@ public class SentenceSentimentApp {
         int limit = 1250;
         int skip;
 
-
         for (int i = 0; i < NUM_THREADS; i++) {
+            // Num skipped initially of already computed
             skip = 170000 + (i * limit);
             System.out.println("Thread-"+ i + " range: " + skip + "-" + (skip+limit));
             SentenceSentimentWorker worker = new SentenceSentimentWorker(limit, skip);
             Thread thread = new Thread(worker, "Thread-" + i);
             threadList.add(thread);
         }
-
 
         for (Thread t : threadList) {
             t.start();

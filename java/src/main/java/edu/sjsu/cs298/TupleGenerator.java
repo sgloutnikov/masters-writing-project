@@ -12,7 +12,6 @@ import java.util.List;
 import static com.mongodb.client.model.Sorts.ascending;
 
 public class TupleGenerator {
-
     public static void main(String[] args) {
         String host = "";
         int port = 27017;
@@ -26,7 +25,6 @@ public class TupleGenerator {
 
         MongoCursor<Document> cursor = sentimentVectors.find().sort(ascending("_id"))
                 .skip(skip).iterator();
-
         try {
             while (cursor.hasNext()) {
                 Document sentimentVectorDoc = cursor.next();
@@ -55,7 +53,6 @@ public class TupleGenerator {
             cursor.close();
             mongoClient.close();
         }
-
     }
 
     /*
@@ -73,7 +70,6 @@ public class TupleGenerator {
             }
             k--;
         }
-
         return sentimentTuples;
     }
 }
