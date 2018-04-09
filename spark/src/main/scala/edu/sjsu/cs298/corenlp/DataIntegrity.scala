@@ -1,7 +1,6 @@
-package edu.sjsu.cs298
+package edu.sjsu.cs298.corenlp
 
 import com.mongodb.spark.MongoSpark
-import com.mongodb.spark.config.ReadConfig
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 
@@ -15,7 +14,6 @@ object DataIntegrity {
       .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.sentiment_vectors")
       .config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.sentimentVectors")
       .getOrCreate()
-    import spark.sqlContext.implicits._
 
     // All sentiment vectors
     val allSentimentVectors = MongoSpark.load(spark)

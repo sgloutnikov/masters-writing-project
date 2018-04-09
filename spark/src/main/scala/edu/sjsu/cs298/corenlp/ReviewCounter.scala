@@ -1,10 +1,8 @@
-package edu.sjsu.cs298
+package edu.sjsu.cs298.corenlp
 
+import com.mongodb.spark.MongoSpark
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions._
-import com.databricks.spark.corenlp.functions._
-import com.mongodb.spark.MongoSpark
 
 object ReviewCounter {
 

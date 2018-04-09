@@ -12,11 +12,12 @@ object Results {
 
     val sparkSession = SparkSession.builder()
       .master("local[*]")
-      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.sentimentTuples")
-      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.userAbnormalityScore")
+      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/yelp_reviews.nb_userTupleStats")
+      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/yelp_reviews.nb_userAbnormalityScore")
       .getOrCreate()
-    import sparkSession.sqlContext.implicits._
     import org.apache.spark.sql.functions._
+    import sparkSession.sqlContext.implicits._
+
 
     val allTuples = MongoSpark.load(sparkSession)
 
@@ -47,8 +48,9 @@ object Results {
         .withColumn("abnormalityScore", pow('tupleFrequency, 2).multiply(pow('tupleLength, 2))
           .multiply(pow('absDiffObsExpected, 2)))
 
-    val userAbnormalityScore = userTupleFullStats.groupBy('user_id).agg(sum('abnormalityScore)
-      .as("userAbnormalityScore")).sort(desc("userAbnormalityScore"))
+
+    //val userAbnormalityScore = userTupleFullStats.groupBy('user_id).agg(sum('abnormalityScore)
+    //  .as("userAbnormalityScore")).sort(desc("userAbnormalityScore"))
 
 
     // Distribution Stats

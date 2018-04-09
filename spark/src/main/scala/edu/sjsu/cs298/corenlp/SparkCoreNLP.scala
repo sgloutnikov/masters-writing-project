@@ -1,14 +1,17 @@
-package edu.sjsu.cs298
+package edu.sjsu.cs298.corenlp
 
+import com.databricks.spark.corenlp.functions._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import com.databricks.spark.corenlp.functions._
-import com.mongodb.spark.MongoSpark
 
+/**
+  * Will not run sentiment score in parallel.
+  * Switched to own Java implementation.
+  */
 object SparkCoreNLP {
 
-  val REVIEWS_LOCATION = "/Users/sgloutnikov/Downloads/dataset/review_small.json"
+  val REVIEWS_LOCATION = ""
 
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
