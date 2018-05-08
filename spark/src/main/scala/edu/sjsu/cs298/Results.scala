@@ -49,8 +49,8 @@ object Results {
           .multiply(pow('absDiffObsExpected, 2)))
 
 
-    //val userAbnormalityScore = userTupleFullStats.groupBy('user_id).agg(sum('abnormalityScore)
-    //  .as("userAbnormalityScore")).sort(desc("userAbnormalityScore"))
+    val userAbnormalityScore = userTupleFullStats.groupBy('user_id).agg(sum('abnormalityScore)
+      .as("userAbnormalityScore")).sort(desc("userAbnormalityScore"))
 
 
     // Distribution Stats

@@ -4,3 +4,4 @@ project/
 out/
 NBModelLambda1/
 .DS_Store
+*.iml

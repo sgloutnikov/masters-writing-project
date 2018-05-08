@@ -28,7 +28,7 @@ object ResultsValidation {
     println(matchingStats.count())
     matchingStats.show(false)
 
-    /*
+
     // Distribution stats CoreNLP
     val cnlpStats = cnlpUserStats.describe("userAbnormalityScore").collectAsList()
     val mean = cnlpStats.get(1).getAs[String](1).toDouble
@@ -42,7 +42,6 @@ object ResultsValidation {
     println("# 1 STD Above Mean: " + oneStdAboveMean.count())
     println("# 2 STD Above Mean: " + twoStdAboveMean.count())
     println("# Below 1 STD: " + belowOneStd.count())
-    */
 
     /*
     // Distribution stats Naive Bayes
